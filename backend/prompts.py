@@ -73,7 +73,7 @@ AMAZON_ORDER_EXTEND = """
 AMAZON ORDER - SIMPLE WORKFLOW
 
 IMPORTANT RULES:
-1. Click "Add to Cart" only ONCE - never again after that
+1. Use "Buy Now" button directly (DO NOT use "Add to Cart")
 2. Use show_address_choices and show_payment_choices tools to ask user
 3. If stuck repeating same action 3+ times, try alternative approach
 
@@ -81,47 +81,51 @@ PAGE LOADING RULE (CRITICAL):
 - If page appears empty or shows blank content, use wait action for 3-5 seconds
 - Do NOT refresh the page
 - Do NOT navigate back
-- Do NOT keep retrying navigation
 - Just WAIT - the page is loading in the background
 - After waiting, the content will appear - then proceed normally
 
 WORKFLOW:
 
 1. PRODUCT PAGE:
-   - Check quantity dropdown shows correct quantity from USER INSTRUCTIONS
-   - If wrong, click dropdown and select correct quantity
-   - Click "Add to Cart" once
-   - Click "Proceed to checkout" or "Go to Cart" from popup
-   - If no popup, navigate to: https://www.amazon.in/gp/cart/view.html
+   - DO NOT select quantity on product page
+   - Just click "Buy Now" button directly (NOT "Add to Cart")
+   - This takes you straight to checkout
 
-2. CART PAGE (IMPORTANT - CLEAN UP CART):
-   - First, check if there are OTHER items in cart that are NOT the product you're ordering
-   - If other items exist: Remove them by clicking "Delete" link next to each unwanted item
-   - Only the product from USER INSTRUCTIONS should remain in cart
-   - Verify product and quantity are correct for your item
-   - If quantity wrong, use +/- buttons to adjust
-   - Click "Proceed to Buy" button
-   - If page appears empty after click, use wait action for 5 seconds - do NOT refresh
+2. CHECKOUT PAGE - ADJUST QUANTITY FIRST (MANDATORY - DO THIS BEFORE PAYMENT):
+   - Check the current quantity shown next to the product
+   - If quantity does NOT match USER INSTRUCTIONS:
+     * Click "+" button to INCREASE quantity (click multiple times if needed)
+     * Click "-" button to DECREASE quantity if needed
+     * Example: USER INSTRUCTIONS says Quantity: 2, current is 1 → click "+" ONCE
+     * Example: USER INSTRUCTIONS says Quantity: 3, current is 1 → click "+" TWICE
+   - Wait for price to update after quantity change
+   - VERIFY quantity matches USER INSTRUCTIONS before proceeding
 
-3. LOGIN (if appears):
+3. CHECKOUT PAGE - CLEANUP (IF NEEDED):
+   - Check if there are OTHER items listed that are NOT the product you're ordering
+   - If other items exist: Remove them by clicking "Delete" link
+   - Only the product from USER INSTRUCTIONS should remain
+   - If page appears empty, use wait action for 5 seconds - do NOT refresh
+
+4. LOGIN (if appears):
    - Use ask_user for email/phone, then input it
    - Use ask_user for password, then input it
    - Use ask_user for OTP if needed
 
-4. ADDRESS PAGE:
+5. ADDRESS PAGE:
    - If page appears empty, use wait action for 3-5 seconds
    - When you see addresses listed, call show_address_choices with all addresses
    - Wait for user selection
    - Click "Deliver to this address" for selected address
 
-5. PAYMENT PAGE (shows "Payment method" heading, Credit Card, UPI, COD options):
+6. PAYMENT PAGE (shows "Payment method" heading, Credit Card, UPI, COD options):
    - If page appears empty, use wait action for 3-5 seconds
    - If you see payment options, the page IS loaded - proceed immediately
    - If user specified payment in USER INSTRUCTIONS, select it directly
    - Otherwise call show_payment_choices with all options
    - After selection, click "Use this payment method"
 
-6. REVIEW & PLACE ORDER:
+7. REVIEW & PLACE ORDER:
    - Use ask_user: "Place order for [PRODUCT] at [PRICE]? (yes/no)"
    - If yes, click "Place your order"
    - Wait for confirmation page
@@ -131,7 +135,6 @@ WHEN STUCK:
 - If page appears empty: use wait action for 5 seconds, DO NOT refresh or navigate
 - If same action fails 3 times: try alternative (e.g., direct URL navigation)
 - If error message appears: return "ORDER FAILED: [error]" and stop
-- Never click "Add to Cart" more than once
 - Never go back to product page after checkout started
 """
 
