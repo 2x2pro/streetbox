@@ -75,8 +75,15 @@ AMAZON ORDER - SIMPLE WORKFLOW
 IMPORTANT RULES:
 1. Click "Add to Cart" only ONCE - never again after that
 2. Use show_address_choices and show_payment_choices tools to ask user
-3. If page seems empty, use wait action (2-3 seconds) - do NOT refresh/navigate
-4. If stuck repeating same action 3+ times, try alternative approach
+3. If stuck repeating same action 3+ times, try alternative approach
+
+PAGE LOADING RULE (CRITICAL):
+- If page appears empty or shows blank content, use wait action for 3-5 seconds
+- Do NOT refresh the page
+- Do NOT navigate back
+- Do NOT keep retrying navigation
+- Just WAIT - the page is loading in the background
+- After waiting, the content will appear - then proceed normally
 
 WORKFLOW:
 
@@ -87,12 +94,14 @@ WORKFLOW:
    - Click "Proceed to checkout" or "Go to Cart" from popup
    - If no popup, navigate to: https://www.amazon.in/gp/cart/view.html
 
-2. CART PAGE:
-   - Verify product and quantity are correct
+2. CART PAGE (IMPORTANT - CLEAN UP CART):
+   - First, check if there are OTHER items in cart that are NOT the product you're ordering
+   - If other items exist: Remove them by clicking "Delete" link next to each unwanted item
+   - Only the product from USER INSTRUCTIONS should remain in cart
+   - Verify product and quantity are correct for your item
    - If quantity wrong, use +/- buttons to adjust
    - Click "Proceed to Buy" button
-   - If page appears empty after click, use wait action for 3 seconds
-   - Do NOT keep navigating back - wait for page to load
+   - If page appears empty after click, use wait action for 5 seconds - do NOT refresh
 
 3. LOGIN (if appears):
    - Use ask_user for email/phone, then input it
@@ -100,11 +109,13 @@ WORKFLOW:
    - Use ask_user for OTP if needed
 
 4. ADDRESS PAGE:
+   - If page appears empty, use wait action for 3-5 seconds
    - When you see addresses listed, call show_address_choices with all addresses
    - Wait for user selection
    - Click "Deliver to this address" for selected address
 
 5. PAYMENT PAGE (shows "Payment method" heading, Credit Card, UPI, COD options):
+   - If page appears empty, use wait action for 3-5 seconds
    - If you see payment options, the page IS loaded - proceed immediately
    - If user specified payment in USER INSTRUCTIONS, select it directly
    - Otherwise call show_payment_choices with all options
@@ -117,7 +128,7 @@ WORKFLOW:
    - Return: "Order placed successfully. Order ID: [ID]"
 
 WHEN STUCK:
-- If page appears empty: use wait action for 3 seconds, then check again
+- If page appears empty: use wait action for 5 seconds, DO NOT refresh or navigate
 - If same action fails 3 times: try alternative (e.g., direct URL navigation)
 - If error message appears: return "ORDER FAILED: [error]" and stop
 - Never click "Add to Cart" more than once
@@ -166,6 +177,13 @@ CRITICAL RULES - YOU MUST FOLLOW THESE:
 - DO NOT ask about delivery address or payment options UNTIL you actually reach those pages
 - Address and payment choices should ONLY be shown when you are on the respective checkout pages
 
+PAGE LOADING RULE (CRITICAL):
+- If page appears empty or shows blank content, use wait action for 3-5 seconds
+- Do NOT refresh the page
+- Do NOT navigate back
+- Just WAIT - the page is loading in the background
+- After waiting, the content will appear - then proceed normally
+
 STEP 1 - CHECK USER INSTRUCTIONS FIRST (BEFORE ANYTHING ELSE):
 - Check if USER INSTRUCTIONS section exists above with quantity, payment method, address preference
 - Quantity will be specified in USER INSTRUCTIONS - use that quantity directly
@@ -180,15 +198,32 @@ STEP 3 - STOCK CHECK:
 - "Add to Cart" or "Buy Now" visible = proceed
 - "Out of Stock" or "Notify Me" = STOP, return "Product out of stock"
 
-STEP 4 - QUANTITY SELECTION ON PAGE:
-- Look for quantity dropdown/selector on product page
-- Select the quantity specified in USER INSTRUCTIONS
-- If the exact quantity is not available, use show_options with available quantities and ask user
-- If no quantity selector visible, proceed (quantity will be 1 by default)
+STEP 4 - BUY NOW (DO NOT USE ADD TO CART):
+- Click "Buy Now" button directly (NOT "Add to Cart")
+- This takes you straight to Order Summary/Checkout
 
-STEP 5 - ADD TO CART:
-- Click "Add to Cart" button
-- Click "Place Order" or "Go to Cart" then checkout button
+STEP 5 - ORDER SUMMARY CLEANUP (MANDATORY - DO NOT SKIP):
+- On the ORDER SUMMARY page, look at ALL items listed
+- Identify the product you are ordering (from the task URL/product name)
+
+REMOVE UNWANTED ITEMS:
+- If there are OTHER items that are NOT the product you're ordering:
+  - For EACH unwanted item:
+    1. Click "REMOVE" link next to that item
+    2. When "Remove Item" confirmation popup appears: Click the "REMOVE" button
+    3. Wait 2-3 seconds for page to update
+    4. Repeat for next unwanted item
+  - Keep removing until ONLY the ordered product remains
+
+ADJUST QUANTITY:
+- Check the quantity of your product in Order Summary
+- If quantity needs to be increased: Click the "+" button to increase
+- If quantity needs to be decreased: Click the "-" button to decrease
+- Set quantity to match USER INSTRUCTIONS
+- Wait for price to update after quantity change
+
+- Verify: Order Summary should show only the product from task URL with correct quantity
+- Then proceed with checkout
 
 STEP 6 - LOGIN (if login form appears):
 - Use ask_user action for phone/email when input field visible
