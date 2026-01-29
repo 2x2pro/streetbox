@@ -253,7 +253,7 @@ async def stream_agent_events(request: AgentRequest) -> AsyncGenerator[str, None
                     )
 
                 return ActionResult(
-                    extracted_content=f"USER SELECTED ADDRESS #{selected_idx + 1}: {selected.name}, {selected.address}. Click 'DELIVER HERE' for this address."
+                    extracted_content=f"USER SELECTED ADDRESS #{selected_idx + 1}: {selected.name}, {selected.address}. ACTION REQUIRED: Check if this address already has 'Deliver Here' button visible. If YES → click 'Deliver Here' directly. If NO → first click the RADIO BUTTON next to this address, wait 2 seconds for 'Deliver Here' to appear, then click it."
                 )
         except (ValueError, IndexError):
             pass

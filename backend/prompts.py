@@ -128,7 +128,16 @@ WORKFLOW:
 7. REVIEW & PLACE ORDER:
    - Use ask_user: "Place order for [PRODUCT] at [PRICE]? (yes/no)"
    - If yes, click "Place your order"
-   - Wait for confirmation page
+
+8. VERIFY ORDER SUCCESS (MANDATORY - DO NOT SKIP):
+   - After clicking Place Order, WAIT for 5 seconds for confirmation page to load
+   - Look for ORDER CONFIRMATION indicators:
+     * "Order placed" or "Thank you" message
+     * Order ID / Order Number displayed
+     * Delivery date shown
+   - If you see confirmation: Extract Order ID and return success
+   - If page shows error: return "ORDER FAILED: [error message]"
+   - DO NOT declare success until you see the confirmation page with Order ID
    - Return: "Order placed successfully. Order ID: [ID]"
 
 WHEN STUCK:
@@ -171,106 +180,78 @@ DO NOT add to cart. Search only.
 FLIPKART_ORDER_TASK = "Complete purchase of product: {product_url}"
 
 FLIPKART_ORDER_EXTEND = """
-FLIPKART ORDER WORKFLOW:
+FLIPKART ORDER AUTOMATION
 
-CRITICAL RULES - YOU MUST FOLLOW THESE:
-- NEVER auto-select address or payment - ALWAYS ask the user first
-- NEVER click "Deliver Here" or "Continue" without showing choices to user first
-- You MUST use show_address_choices, show_payment_choices tools - these are MANDATORY
-- DO NOT ask about delivery address or payment options UNTIL you actually reach those pages
-- Address and payment choices should ONLY be shown when you are on the respective checkout pages
+DO NOT ASK USER FOR:
+- Quantity (use +/- buttons from USER INSTRUCTIONS)
 
-PAGE LOADING RULE (CRITICAL):
-- If page appears empty or shows blank content, use wait action for 3-5 seconds
-- Do NOT refresh the page
-- Do NOT navigate back
-- Just WAIT - the page is loading in the background
-- After waiting, the content will appear - then proceed normally
+ONLY ASK USER FOR:
+- Address (show_address_choices) - on Order Summary page
+- Payment (show_payment_choices) - ONLY on Complete Payment page, ONLY if not specified in USER INSTRUCTIONS
 
-STEP 1 - CHECK USER INSTRUCTIONS FIRST (BEFORE ANYTHING ELSE):
-- Check if USER INSTRUCTIONS section exists above with quantity, payment method, address preference
-- Quantity will be specified in USER INSTRUCTIONS - use that quantity directly
-- If user specified payment method (e.g., "COD", "UPI"), remember it for payment step
-- If user specified address preference, remember it for address step
+PAGE LOADING: If page empty, wait 3-5 seconds. Do NOT refresh.
 
-STEP 2 - NAVIGATE:
-- Use navigate action to product URL
-- Close any popups using click action
+STEP 1 - PRODUCT PAGE:
+- Click "Buy Now" button
+- If "Out of Stock" → return "Product out of stock"
 
-STEP 3 - STOCK CHECK:
-- "Add to Cart" or "Buy Now" visible = proceed
-- "Out of Stock" or "Notify Me" = STOP, return "Product out of stock"
+STEP 2 - ORDER SUMMARY PAGE:
 
-STEP 4 - BUY NOW (DO NOT USE ADD TO CART):
-- Click "Buy Now" button directly (NOT "Add to Cart")
-- This takes you straight to Order Summary/Checkout
+ADDRESS SELECTION (if address options shown):
+- Call show_address_choices with all available addresses
+- WAIT for user response - do NOT proceed until user selects an address
+- The tool will return which address the user selected
+- Check if user's selected address already has "Deliver Here" button visible:
+  * If YES → click "Deliver Here" directly
+  * If NO → click the RADIO BUTTON next to that address first, wait 2 seconds, then click "Deliver Here"
+- Wait 2 seconds for page to update after clicking "Deliver Here"
 
-STEP 5 - ORDER SUMMARY CLEANUP (MANDATORY - DO NOT SKIP):
-- On the ORDER SUMMARY page, look at ALL items listed
-- Identify the product you are ordering (from the task URL/product name)
+CLEANUP (if other items in cart):
+- Remove other items: click "REMOVE" → confirm popup → wait 2 sec
 
-REMOVE UNWANTED ITEMS:
-- If there are OTHER items that are NOT the product you're ordering:
-  - For EACH unwanted item:
-    1. Click "REMOVE" link next to that item
-    2. When "Remove Item" confirmation popup appears: Click the "REMOVE" button
-    3. Wait 2-3 seconds for page to update
-    4. Repeat for next unwanted item
-  - Keep removing until ONLY the ordered product remains
+QUANTITY ADJUSTMENT (CRITICAL - DO NOT RUSH):
+- Check current quantity displayed
+- If quantity does NOT match USER INSTRUCTIONS:
+  * Adjust quantity using available method (input field, +/- buttons, or dropdown)
+  * WAIT 3 seconds for UI to update and reflect the change
+- If "limit per user" or max quantity restriction appears → use ask_user to inform and ask how to proceed
+- STOP and VERIFY: The displayed quantity MUST match USER INSTRUCTIONS
+- DO NOT proceed until quantity is visually confirmed as correct
 
-ADJUST QUANTITY:
-- Check the quantity of your product in Order Summary
-- If quantity needs to be increased: Click the "+" button to increase
-- If quantity needs to be decreased: Click the "-" button to decrease
-- Set quantity to match USER INSTRUCTIONS
-- Wait for price to update after quantity change
+AFTER QUANTITY IS VERIFIED:
+- Click "CONTINUE" button
+- Wait 3 seconds
+- If "Accept & Continue" button appears → Click it
+- Wait 3 seconds
 
-- Verify: Order Summary should show only the product from task URL with correct quantity
-- Then proceed with checkout
+STEP 3 - COMPLETE PAYMENT PAGE (shows "Complete Payment" heading):
+- You are NOW on the payment page with options: UPI, Card, EMI, Cash on Delivery
+- If USER INSTRUCTIONS contains "cod" or "COD" → Click "Cash on Delivery" directly
+- Otherwise → Call show_payment_choices → wait for user → click selected option
 
-STEP 6 - LOGIN (if login form appears):
-- Use ask_user action for phone/email when input field visible
-- Use input_text action immediately with the value
-- Use ask_user action for OTP/password when that field appears
-- Use input_text action immediately with the value
+STEP 5 - PROCESS SELECTED PAYMENT:
+FOR COD:
+  1. Click "Cash on Delivery" option
+  2. "Accept & Continue" button may appear → Click it
+  3. Wait 3 seconds
+  4. "Place Order" button appears (yellow)
+  5. Ask user: "Place order for [PRODUCT] at [PRICE]? (yes/no)"
+  6. If YES → Click "Place Order"
 
-STEP 7 - ADDRESS SELECTION (ONLY WHEN YOU REACH ADDRESS PAGE):
-- ONLY when you actually see the address/delivery page with addresses listed:
-  * If user specified address preference in USER INSTRUCTIONS (e.g., "home address", "office", or specific name):
-    - Find the matching address and select it directly
-    - Skip show_address_choices
-  * If user did NOT specify address preference:
-    - Extract ALL saved delivery addresses (name, phone, full address)
-    - Add an option for "Add New Address" at the end
-    - MUST call show_address_choices action with all addresses
-    - WAIT for user response - DO NOT click anything yet
-    - Only AFTER user selects, click "Deliver Here" for THAT specific address
-- If user chose "Add New Address": use ask_user for each field
-- DO NOT show address choices before reaching this page
+FOR UPI:
+  1. Click "UPI" option
+  2. ask_user for UPI ID → Enter in field → Click "Verify"
+  3. Click "Pay" button
 
-STEP 8 - ORDER SUMMARY:
-- Click "Continue" button to proceed to payment
+FOR CARD:
+  1. Click "Credit/Debit/ATM Card" option
+  2. ask_user for card details → Enter → Click "Pay"
 
-STEP 9 - PAYMENT SELECTION (ONLY WHEN YOU REACH PAYMENT PAGE):
-- ONLY when you actually see the payment options page:
-  * If user already specified payment method in USER INSTRUCTIONS (e.g., "COD", "Cash on Delivery"):
-    - Directly select that payment method without asking
-    - Skip show_payment_choices
-  * If user did NOT specify payment method:
-    - Extract ALL available payment methods (COD, UPI, Card, Net Banking, Wallets, etc.)
-    - MUST call show_payment_choices action with all methods
-    - WAIT for user response - DO NOT select any payment yet
-    - Only AFTER user selects, click that payment option
-  * For UPI: use ask_user for UPI ID
-  * For Card: use ask_user for card details
-- DO NOT show payment choices before reaching this page
-
-STEP 10 - FINAL CONFIRMATION:
-- Use ask_user action: "Place order for [PRODUCT] at [PRICE]? (yes/no)"
-- If user says YES: click final "Place Order" button
-- If user says NO: return "Order cancelled by user"
-
-SUCCESS: Extract Order ID, return "Order placed successfully. Order ID: [ID]"
+STEP 6 - VERIFY SUCCESS:
+- Wait 5 seconds for confirmation page
+- Look for: Order ID, "Order Confirmed", "Thank you"
+- Return "Order placed successfully. Order ID: [ID]"
+- DO NOT declare success without seeing Order ID
 """
 
 
